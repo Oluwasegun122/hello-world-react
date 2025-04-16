@@ -1,51 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import NaijaList from "./components/NaijaList";
 import "./App.css";
 
-function ClickCounter() {
-  const [count, setCount] = useState(0);
-  const [message, setMessage] = useState("");
+function App() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const increment = () => {
-    const newCount = count + 1;
-    setCount(newCount);
-    checkThreshold(newCount);
-  };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        // Using a reliable API with Nigerian user data
+        const response = await fetch(
+          "https://randomuser.me/api/?results=5&nat=NG"
+        );
+        if (!response.ok) throw new Error("Failed to fetch");
 
-  const decrement = () => {
-    if (count > 0) {
-      const newCount = count - 1;
-      setCount(newCount);
-      checkThreshold(newCount);
-    }
-  };
+        const data = await response.json();
+        setUsers(
+          data.results.map((user) => ({
+            id: user.login.uuid,
+            name: `${user.name.first} ${user.name.last}`,
+            email: user.email,
+            phone: user.phone,
+            location: `${user.location.city}, Nigeria`,
+          }))
+        );
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const checkThreshold = (value) => {
-    if (value >= 10) {
-      setMessage("You've reached the limit!");
-    } else {
-      setMessage("");
-    }
-  };
+    fetchUsers();
+  }, []);
 
   return (
-    <div className="counter-app">
-      <h1>Click Counter</h1>
-      <div className="counter-display">{count}</div>
-      <div className="button-group">
-        <button onClick={increment} className="btn increment">
-          Increase +
-        </button>
-        <button
-          onClick={decrement}
-          className="btn decrement"
-          disabled={count === 0}
-        >
-          Decrease -
-        </button>
-      </div>
-      {message && <p className="message">{message}</p>}
+    <div className="app">
+      <h1>Nigerian Users Directory</h1>
+      <NaijaList items={users} loading={loading} error={error} />
     </div>
   );
 }
 
-export default ClickCounter;
+export default App;
